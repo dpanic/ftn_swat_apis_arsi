@@ -12,7 +12,6 @@
 * UNIVERZITET U NOVOM SADU, Fakultet tehničkih nauka
 
 <br>
-<br>
 
 ## Environment 
 
@@ -21,7 +20,6 @@ Python Version: 3.6 or later
 Python Packages: jupyterlab, torch, numpy, pandas, matplotlib
 ```
 
-<br>
 <br>
 
 ## Visualization
@@ -32,7 +30,6 @@ Python Packages: jupyterlab, torch, numpy, pandas, matplotlib
 
 
 <br>
-<br>
 
 ## Analysis
 Analysis of CSV files, determine patterns from which Yara rules will be built 
@@ -40,7 +37,6 @@ Analysis of CSV files, determine patterns from which Yara rules will be built
 * Create Yara rules [ ARSI ]
     / milos /
 
-<br>
 <br>
 
 ## Machine Learning and Response
@@ -52,14 +48,12 @@ Analysis of CSV files and ML training:
 / dusan /
 
 <br>
-<br>
 
 ## Documentation
 * 2 Presentations
 * 1 Word document
     
 
-<br>
 <br>
 
 ## References
