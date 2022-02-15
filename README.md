@@ -1,16 +1,17 @@
 # SWAT APIS & ARSI
-Authors:
+
+## Authors:
 * Sandra Čoralić (I9 5/2021)
 * Miloš Milovanović (I9 6/2021)
 * Dušan Panić (I9 7/2021)
 
-Profesor:
+## Profesor:
 * PhD, Imre Lendak
 
-Institution:
-UNIVERZITET U NOVOM SADU, Fakultet tehničkih nauka
+## Institution:
+* UNIVERZITET U NOVOM SADU, Fakultet tehničkih nauka
 
-## 🔧 Environment 
+## Environment 
 
 ``` 
 Python Version: 3.6 or later
