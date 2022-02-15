@@ -11,6 +11,9 @@
 ## Institution:
 * UNIVERZITET U NOVOM SADU, Fakultet tehničkih nauka
 
+<br>
+<br>
+
 ## Environment 
 
 ``` 
@@ -18,25 +21,37 @@ Python Version: 3.6 or later
 Python Packages: jupyterlab, torch, numpy, pandas, matplotlib
 ```
 
+<br>
+<br>
+
 ## Visualization
-* Python Jypter visulization of malicious events:
-    ✅ global chart [ APIS ] 
-    * plot and divide per process where attack occurs (P1, P1 i P3) [ APIS ]
-    / dusan/
+ Python Jypter visulization of malicious events:
+* ✅ global chart [ APIS ] 
+* plot and divide per process where attack occurs (P1, P1 i P3) [ APIS ]
+/ dusan/
+
+
+<br>
+<br>
 
 ## Analysis
-* Analysis of CSV files, determine patterns from which Yara rules will be built 
-    * Find IOC's: src ip, src port, dst ip, dst port, raw podaci... [ APIS ]
-    * Create Yara rules [ ARSI ]
+Analysis of CSV files, determine patterns from which Yara rules will be built 
+* Find IOC's: src ip, src port, dst ip, dst port, raw podaci... [ APIS ]
+* Create Yara rules [ ARSI ]
     / milos /
 
+<br>
+<br>
+
 ## Machine Learning and Response
-* Analysis of CSV files and ML training:
-    * choose ML algorithm [ APIS ]
-    * perform training on control set [ APIS ]
-    * perform training on whole set [ APIS ]
-    * show results of ML anomaly detection [ APIS ]
-    / dusan /
+Analysis of CSV files and ML training:
+* choose ML algorithm [ APIS ]
+* perform training on control set [ APIS ]
+* perform training on whole set [ APIS ]
+* show results of ML anomaly detection [ APIS ]
+/ dusan /
+
+
 
 ## Documentation
 * 2 Presentations
