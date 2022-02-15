@@ -4,6 +4,12 @@ Authors:
 * Miloš Milovanović (I9 6/2021)
 * Dušan Panić (I9 7/2021)
 
+Profesor:
+* PhD, Imre Lendak
+
+Institution:
+UNIVERZITET U NOVOM SADU, Fakultet tehničkih nauka
+
 ## 🔧 Environment 
 
 ``` 
@@ -11,29 +17,29 @@ Python Version: 3.6 or later
 Python Packages: jupyterlab, torch, numpy, pandas, matplotlib
 ```
 
+## Visualization
+* Python Jypter visulization of malicious events:
+    ✅ global chart [ APIS ] 
+    * plot and divide per process where attack occurs (P1, P1 i P3) [ APIS ]
+    / dusan/
 
 ## Analysis
-* Python Jypter vizualizacija malicioznih dogadjaja, izrada grafika iz CSV-ova
-    ✅ globalni grafik [ APIS ] 
-    * podeljeno po procesima gde se desava napad npr (P1, P1 i P3) [ APIS ]
-    / dusan/
-    * 
-
-* Analiza CSV-ova, izrada patterna od kojih ce se posle napraviti Yara pravila
-    * Analiza PCAP-ova, i izvlacenje IOC-ova. src ip, src port, dst ip, dst port, raw podaci... [ APIS ]
-    * Izrada Yara pravila, (dostavicu primere) [ ARSI ]
+* Analysis of CSV files, determine patterns from which Yara rules will be built 
+    * Find IOC's: src ip, src port, dst ip, dst port, raw podaci... [ APIS ]
+    * Create Yara rules [ ARSI ]
     / milos /
-    
-* Analiza CSV-ova, ML trening; 
-    * odabir ML algoritma [ APIS ]
-    * trening istog  [ APIS ]
-    * verifikacija rezultata tabelarno [ APIS ]
-    * reakcija same detekcije anomalije je zapravo [ ARSI ]
+
+## Machine Learning and Response
+* Analysis of CSV files and ML training:
+    * choose ML algorithm [ APIS ]
+    * perform training on control set [ APIS ]
+    * perform training on whole set [ APIS ]
+    * show results of ML anomaly detection [ APIS ]
     / dusan /
 
- * Prezentacije i DOCX
-    / sandra /
-
+## Documentation
+* 2 Presentations
+* 1 Word document
     
 ## ARSI projekat, reference
  * https://mlad.kaspersky.com/swat-testbed/
