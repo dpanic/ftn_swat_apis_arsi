@@ -51,13 +51,18 @@ Analysis of CSV files and ML training:
 * show results of ML anomaly detection [ APIS ]
 / dusan /
 
-
+<br>
+<br>
 
 ## Documentation
 * 2 Presentations
 * 1 Word document
     
-## ARSI projekat, reference
+
+<br>
+<br>
+
+## References
  * https://mlad.kaspersky.com/swat-testbed/
  * https://labs.f-secure.com/archive/offensive-ics-exploitation-a-technical-description/
  * https://arxiv.org/pdf/1809.04786.pdf
