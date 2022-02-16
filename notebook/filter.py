@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 def get_stage(input):
     """
@@ -14,6 +15,16 @@ def get_stage(input):
     out = "P%s" %(number[0])
     return out
 
+
+def load_df(df_file_loc, columns):
+    """
+    load df by columns
+    """
+    df_out = pd.read_csv(df_file_loc, usecols=columns)
+    print(df_out.shape)
+    print(df_out.head())
+
+    return df_out
 
 
 def get_times(anomalies, filter_by=None):
