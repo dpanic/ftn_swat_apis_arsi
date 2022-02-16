@@ -12,9 +12,9 @@ def anomalies(file_loc):
     stages = {}
     anomalies = []
 
-    xlsx = pd.read_excel(file_loc, sheet_name="Sheet1")
+    df = pd.read_csv(file_loc, delimiter=";")
 
-    for index, row in xlsx.iterrows():
+    for index, row in df.iterrows():
         try:
             # skip if there is no attack
             try:
