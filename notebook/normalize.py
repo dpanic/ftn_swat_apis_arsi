@@ -1,6 +1,9 @@
 
 
 def date_time(input):
+    """
+        process date/time in desired format
+    """
     tmp = str(input).split(" ")
 
     year, month, day = date(tmp[0])
@@ -14,6 +17,9 @@ def date_time(input):
 
 
 def date(input):
+    """
+        process date in desired format
+    """
     if input.find("/") > -1:
         t = input.split("/")
         year = int(t[2])
@@ -33,6 +39,9 @@ def date(input):
     return [ str(year), str(month), str(day) ]
 
 def time(input):
+    """
+        process time in desired format
+    """
     t = input.split(":")
 
     hour = int(t[0])
@@ -48,3 +57,5 @@ def time(input):
         second = "0" + str(second)
 
     return [ str(hour), str(minute), str(second) ]
+
+
