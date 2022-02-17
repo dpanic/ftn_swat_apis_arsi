@@ -60,7 +60,8 @@ def anomalies(file_loc):
             attack_stages.sort()
             
 
-            print(attack_points, attack_stages)
+            print(attack_points, attack_stages, time_start, time_end)
+
             # define anomaly
             anomaly = {
                 "time_start": np.array(time_start, dtype=np.datetime64),
@@ -78,7 +79,6 @@ def anomalies(file_loc):
     # sort fields
     for key in stages.keys():
         stages[key] = list(stages[key].keys())
-        print(key, stages[key])
 
     df.reset_index()
     return [ stages, anomalies ]

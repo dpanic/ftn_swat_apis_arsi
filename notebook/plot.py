@@ -12,6 +12,9 @@ def process(obj):
     Main function for plotting
     """
 
+    name = obj["name"]
+    print("Plotting %s" %(name))
+
     file_loc = obj["file_loc"]
     df_custom = obj["df"]
     time_start = obj["time_start"]
@@ -68,18 +71,12 @@ def process(obj):
                 if df_custom.columns[i+1] not in anomaly["attack_points"]:
                     continue
 
-                if anomaly["attack_points"][0] == "AIT504":
-                    print("XXX", anomaly)
-                    print("\n\n", filtered_anomalies)
-                    print(len(filtered_anomalies))
-
                 anomaly_idx = anomaly["time_start"] + np.arange(0, int((anomaly["time_end"] - anomaly["time_start"])/time_delta), 1)
                 
                 anomaly_idx_start = int((anomaly["time_start"] - time_start)/time_delta)
                 anomaly_idx_end = int((anomaly["time_end"] - time_start)/time_delta)
                 
                 loc = df_custom.iloc[idx_start + anomaly_idx_start:idx_start + anomaly_idx_end, i+1]
-
                 
                 # if we haven't colored it yet
                 if df_custom.columns[i+1] not in anomaly_label_indexes:

@@ -21,10 +21,13 @@ def load_df(df_file_loc, columns):
     load df by columns
     """
 
-    columns.insert(0, "Timestamp")
+    usecols = [ "Timestamp" ]
+    for c in columns:
+        usecols.append(c)
+
     # print(columns)
 
-    df_out = pd.read_csv(df_file_loc, usecols=columns)
+    df_out = pd.read_csv(df_file_loc, usecols=usecols)
     # print(df_out.shape)
     # print(df_out.head())
 
