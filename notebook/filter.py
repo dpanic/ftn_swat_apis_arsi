@@ -22,10 +22,10 @@ def load_df(df_file_loc, columns):
     """
 
     columns.insert(0, "Timestamp")
-    print(columns)
+    # print(columns)
 
     df_out = pd.read_csv(df_file_loc, usecols=columns)
-    print(df_out.shape)
+    # print(df_out.shape)
     # print(df_out.head())
 
     return df_out

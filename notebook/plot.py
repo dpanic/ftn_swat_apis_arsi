@@ -1,7 +1,11 @@
 import math
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib as mpl
+mpl.rcParams["figure.max_open_warning"] = 0
 
+import warnings
+warnings.filterwarnings("ignore")
 
 def process(obj):
     """
@@ -64,6 +68,11 @@ def process(obj):
                 if df_custom.columns[i+1] not in anomaly["attack_points"]:
                     continue
 
+                if anomaly["attack_points"][0] == "AIT504":
+                    print("XXX", anomaly)
+                    print("\n\n", filtered_anomalies)
+                    print(len(filtered_anomalies))
+
                 anomaly_idx = anomaly["time_start"] + np.arange(0, int((anomaly["time_end"] - anomaly["time_start"])/time_delta), 1)
                 
                 anomaly_idx_start = int((anomaly["time_start"] - time_start)/time_delta)
@@ -83,6 +92,5 @@ def process(obj):
                     anomaly_label_indexes[df_custom.columns[i+1]] = ""
                 else:
                     axs[i].plot(anomaly_idx, loc, color=color_anomaly, linewidth=6, alpha=0.8)
-                    pass
 
     plt.savefig(file_loc)
