@@ -14,7 +14,7 @@ def process(obj):
     time_delta = obj["time_delta"]
     idx_start = obj["idx_start"]
     idx_end = obj["idx_end"]
-    anomalies = obj["anomalies"]
+    filtered_anomalies = obj["filtered_anomalies"]
     title = obj["title"]
     x = obj["x"]
     total_columns = int(df_custom.shape[1])-1
@@ -38,6 +38,7 @@ def process(obj):
         fig_y = 5 * total_columns
         fig_x = 160
 
+        # fix for broken plotting if 1 subplot
         if total_columns == 1:
             fig, axs = plt.subplots(2, 1, figsize=(fig_x, fig_y))
             axs.flat[-1].set_visible(False)
@@ -47,10 +48,10 @@ def process(obj):
         if title != "":
             fig.suptitle(title, fontsize=96)
         anomaly_label_indexes = {}
-
+ 
 
         for i in range(total_columns):
-            axs[i].plot(x, df_custom.iloc[idx_start:idx_end, i+1], label=df_custom.columns[i+1], color=color_plot)
+            axs[i].plot(x, df_custom.iloc[idx_start:idx_end, i+1], label=df_custom.columns[i+1], color=color_plot, linewidth=2)
 
             axs[i].set_xlabel("Time", fontdict=font)
             axs[i].set_ylabel("Value", fontdict=font)
@@ -59,11 +60,10 @@ def process(obj):
             for label in labels:
                 label.set_fontname(font_family) 
 
-            for anomaly in anomalies:
+            for anomaly in filtered_anomalies:
                 if df_custom.columns[i+1] not in anomaly["attack_points"]:
                     continue
 
-                anomaly["time_start"] = anomaly["time_start"] - 2
                 anomaly_idx = anomaly["time_start"] + np.arange(0, int((anomaly["time_end"] - anomaly["time_start"])/time_delta), 1)
                 
                 anomaly_idx_start = int((anomaly["time_start"] - time_start)/time_delta)
@@ -83,5 +83,6 @@ def process(obj):
                     anomaly_label_indexes[df_custom.columns[i+1]] = ""
                 else:
                     axs[i].plot(anomaly_idx, loc, color=color_anomaly, linewidth=6, alpha=0.8)
+                    pass
 
     plt.savefig(file_loc)

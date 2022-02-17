@@ -26,7 +26,7 @@ Python Packages: jupyterlab, torch, numpy, pandas, matplotlib
  Python Jypter visulization of malicious events:
 * ✅ bootstrap data, download data from external source (because of licence)
 * ✅ global chart [ APIS ] 
-* plot and divide per process where attack occurs (MV101, P101, P102 and AIT201) [ APIS ]
+* ✅ plot and divide per process where attack occurs (MV101, P101, P102 and AIT201) [ APIS ]
 * ✅ plot and divide per stage (P1, P2, P3, P4, P5, P6) [ APIS ]
 / dusan/
 
