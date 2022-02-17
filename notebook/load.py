@@ -12,7 +12,8 @@ def anomalies(file_loc):
     stages = {}
     anomalies = []
 
-    df = pd.read_csv(file_loc, delimiter=";")
+    df = pd.read_excel(file_loc)
+
 
     for index, row in df.iterrows():
         try:
