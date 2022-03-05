@@ -24,20 +24,21 @@ Python Packages: jupyterlab, torch, numpy, pandas, matplotlib
 
 ## Visualization
  Python Jypter visulization of malicious events:
-* ✅ bootstrap data, download data from external source (because of licence)
-* ✅ global chart [ APIS ] 
-* ✅ plot and divide per stage (P1, P2, P3, P4, P5, P6) [ APIS ]
-* ✅ plot and divide per process where attack occurs (MV101, P101, P102 and AIT201) [ APIS ]
+* ✅ Bootstrap data, download data from external source (because of licence)
+* ✅ Global chart [ APIS ] 
+* ✅ Plot and divide per stage (P1, P2, P3, P4, P5, P6) [ APIS ]
+* ✅ Plot and divide per process where attack occurs (MV101, P101, P102 and AIT201) [ APIS ]
 / dusan/
 
 <br>
 
 ## Analysis
 Analysis of CSV files, determine patterns from which Yara rules will be built 
-* Refactor python files to separate folder % 
-* Find IOC's: src ip, src port, dst ip, dst port, raw data... [ APIS ]
-* Create Yara rules [ ARSI ]
-    / milos /
+* ✅ Refactor python files to separate folder 
+* Find IOC's: src ip, src port, dst ip, dst port, raw data... [ APIS ] - 6h
+* Create Yara rules [ ARSI ] - 3h
+* Test patterns on data 
+/ dusan /
 
 <br>
 
