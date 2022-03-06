@@ -31,7 +31,7 @@ def anomalies(file_loc):
                 continue
 
             # extract attack start time
-            time_start, time_start_date = normalize.date_time(row["Start Time"])
+            time_start, _, time_start_date = normalize.date_time(row["Start Time"])
 
             # extract attack end time
             time_end = str(row["End Time"])
@@ -60,7 +60,7 @@ def anomalies(file_loc):
             attack_stages.sort()
             
 
-            print(attack_points, attack_stages, time_start, time_end)
+            # print(attack_points, attack_stages, time_start, time_end)
 
             # define anomaly
             anomaly = {

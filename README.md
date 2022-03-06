@@ -35,8 +35,13 @@ Python Packages: jupyterlab, torch, numpy, pandas, matplotlib
 ## Analysis
 Analysis of CSV files, determine patterns from which Yara rules will be built 
 * ✅ Refactor python files to separate folder 
-* Find IOC's: src ip, src port, dst ip, dst port, raw data... [ APIS ] - 6h
-* Create Yara rules [ ARSI ] - 3h
+* ✅ Find IOC's: src ip, src port, dst ip, dst port, raw data... [ APIS ] 
+    * ✅ isolate where attacks are 
+    * ✅ set skip files
+    * ✅ set precision window (process every N rows)
+    * parse big data 
+    * get patterns
+* Create Yara rules [ ARSI ] 
 * Test patterns on data 
 / dusan /
 
