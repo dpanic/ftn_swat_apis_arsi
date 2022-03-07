@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
@@ -12,9 +13,23 @@ def process(obj):
     """
 
     name = obj["name"]
-    print("Plotting %s" %(name))
 
     file_loc = obj["file_loc"]
+    if os.path.exists(file_loc):
+        print("BEFORE = %s" %(file_loc))
+        file_loc = file_loc.split(".png")[0]
+
+        for it in range(1, 100):
+            file_loc_test = file_loc + "_%d.png" %(it)
+            if os.path.exists(file_loc_test) == False:
+                break
+
+        file_loc = file_loc_test
+        print("AFTER = %s" %(file_loc))
+
+
+
+    log_prefix = obj["log_prefix"]
     df_custom = obj["df"]
     time_start = obj["time_start"]
     time_delta = obj["time_delta"]
@@ -39,6 +54,9 @@ def process(obj):
         "size": 12, 
         "family": font_family
     }
+
+    print("%sPlotting %s" %(log_prefix, file_loc))
+
 
     with plt.style.context("bmh"):
         fig_y = 5 * total_columns
@@ -71,10 +89,10 @@ def process(obj):
                     continue
 
                 anomaly_idx = anomaly["time_start"] + np.arange(0, int((anomaly["time_end"] - anomaly["time_start"])/time_delta), 1)
-                
+
                 anomaly_idx_start = int((anomaly["time_start"] - time_start)/time_delta)
                 anomaly_idx_end = int((anomaly["time_end"] - time_start)/time_delta)
-                
+
                 loc = df_custom.iloc[idx_start + anomaly_idx_start:idx_start + anomaly_idx_end, i+1]
                 
                 # if we haven't colored it yet
@@ -90,3 +108,5 @@ def process(obj):
                     axs[i].plot(anomaly_idx, loc, color=color_anomaly, linewidth=6, alpha=0.8)
 
     plt.savefig(file_loc)
+    if os.path.exists(file_loc) == False:
+        print("%sFailed plotting %s" %(log_prefix, file_loc))

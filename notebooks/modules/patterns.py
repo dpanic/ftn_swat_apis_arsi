@@ -1,6 +1,7 @@
 import os
 import csv
 from time import time
+import binascii, struct
 
 import pandas as pd
 import modules.filter as filter
@@ -11,6 +12,7 @@ class Patterns:
     def __init__(self, precission):
         self.files = []
         self.stats = {}
+        self.patterns = {}
         self.precission = precission
 
 
@@ -96,7 +98,7 @@ class Patterns:
 
         # reading csv file
         df = pd.read_csv(file)
-        names = df.columns.tolist()
+        header = df.columns.tolist()
 
         total = {
             "rows": 0,
@@ -143,10 +145,10 @@ class Patterns:
                 
                 anomalies = self.get_anomalies_by_timestamp(timestamp_epoch)
                 for anomaly in anomalies:
-                    tag = "".join(anomaly["attack_points"])
+                    tag = ", ".join(anomaly["attack_points"])
                     anomalies_unique[tag] = ""
 
-                    tag = "".join(anomaly["attack_stages"])
+                    tag = ", ".join(anomaly["attack_stages"])
                     stages_unique[tag] = ""
 
 
@@ -155,22 +157,60 @@ class Patterns:
                 else:
                     total["normal"] += 1
                 total["rows"] += 1
+
+                obj = self.parse_csv(header, line, ",")
+                if obj["Modbus_Function_Description"].find("Response") == -1:
+                    continue
+
+                self.count_patterns("Modbus_Function_Description", obj["Modbus_Function_Description"])
+                
+                self.count_patterns("orig", obj["orig"])
+                # self.count_patterns("proxy_src_ip", obj["proxy_src_ip"])
+                # self.count_patterns("src", obj["src"])
+                # self.count_patterns("dst", obj["dst"])
+                # self.count_patterns("s_port", obj["s_port"])
+                # self.count_patterns("SCADA_Tag", obj["SCADA_Tag"])
+                # self.count_patterns("service", obj["service"])
+                # self.count_patterns("Tag", obj["Tag"])
+
+                print("START")
+                for modbus_value in obj["Modbus_Value"].split(";"):
+                    val = modbus_value
+                    val = val.replace("0x", "")
+                    val = val.replace(" ", "")
+                    if len(val) != 8:
+                        continue
+
+                    x = struct.unpack('<f', binascii.unhexlify(val))[0]
+                    print(x)
+                    self.count_patterns("modbus_value", modbus_value)
+                print("STOP")
+
+
+
+
         
         
-        total["anomalies"] = len(anomalies_unique.keys())
-        total["stages"] = len(stages_unique.keys())
+        total["total_attack_points"] = len(anomalies_unique.keys())
+        total["total_attack_stages"] = len(stages_unique.keys())
+
+        attack_points = ", ".join(anomalies_unique.keys())
+        attack_stages = ", ".join(stages_unique.keys())
 
         table = [
-            [ "Total rows", "Attack", "Normal", "Attack points", "Attacked stages" ],
-            [ total["rows"], total["attack"], total["normal"], total["anomalies"], total["stages"]]
+            [ "# rows", "Attack", "Normal", "# Attack points", "Attack points", "# Attacked stages", "Attacked stages" ],
+            [ total["rows"], total["attack"], total["normal"], total["total_attack_points"], attack_points, total["total_attack_stages"], attack_stages]
         ]
+
+        print(self.patterns)
+
         return table
 
 
 
     def get_anomalies_by_timestamp(self, timestamp_epoch):
         """
-        goes through stats
+            goes through stats
         """
 
         res = []
@@ -185,3 +225,41 @@ class Patterns:
 
 
         return res
+
+
+    def parse_csv(self, header, line, delimiter):
+        """
+            parses csv based on header and delimiter
+        """
+        obj = {}
+
+        line = line.replace("\r", "")
+        line = line.replace("\n", "")
+
+        tmp = line.split(delimiter)
+
+        for t in range(0, len(tmp)):
+            key = header[t]
+            obj[key] = tmp[t]
+
+        return obj
+
+
+    def count_patterns(self, name, value):
+        """
+            counts stats based on name
+        """
+
+        try:
+            tmp = self.patterns[name]
+        except:
+            self.patterns[name] = {}
+
+
+        try:
+            tmp = self.patterns[name][value]
+        except:
+            self.patterns[name][value] = 0
+
+
+        self.patterns[name][value] += 1

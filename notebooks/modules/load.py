@@ -59,7 +59,6 @@ def anomalies(file_loc):
             attack_stages = list(attack_stages.keys())
             attack_stages.sort()
             
-
             # print(attack_points, attack_stages, time_start, time_end)
 
             # define anomaly

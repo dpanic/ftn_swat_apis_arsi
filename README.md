@@ -20,6 +20,8 @@ Python Version: 3.6 or later
 Python Packages: jupyterlab, torch, numpy, pandas, matplotlib
 ```
 
+
+
 <br>
 
 ## Visualization
@@ -39,21 +41,27 @@ Analysis of CSV files, determine patterns from which Yara rules will be built
     * ✅ isolate where attacks are 
     * ✅ set skip files
     * ✅ set precision window (process every N rows)
-    * parse big data 
-    * get patterns
+    * ✅ parse big data 
+    * extract patterns
 * Create Yara rules [ ARSI ] 
-* Test patterns on data 
+* Test patterns on data with test results
+
+[ knowledge based IDS ]
 / dusan /
+
+>>>
+The attacks were performed at level 1 of the SWaT network as discussed in Section 2. The network data captures the communication between the SCADA system and the PLCs. Hence, the attacks were launched by hijacking the packets as they communicate between the SCADA system and the PLCs. During the process, the network packets are altered to reflect the spoofed values from the sensors.
+<<<
 
 <br>
 
 ## Machine Learning and Response
 Analysis of CSV files and ML training:
-* choose ML algorithm [ APIS ]
-* perform training on control set [ APIS ]
-* perform training on whole set [ APIS ]
-* show results of ML anomaly detection [ APIS ]
-/ dusan /
+* implement moving window stats with k nearest 
+* show tests results in notebook
+
+[ behaviour based IDS ]
+/ sandra and milos /
 
 <br>
 
