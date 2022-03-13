@@ -15,7 +15,10 @@ class Patterns:
         self.patterns = {}
         self.precission = precission
 
-
+        self.anomalies = {
+            "LIT101": [],
+        }
+        
     def bootstrap(self, folder_loc):
         """
         load list of files
@@ -164,16 +167,17 @@ class Patterns:
 
                 self.count_patterns("Modbus_Function_Description", obj["Modbus_Function_Description"])
                 
-                self.count_patterns("orig", obj["orig"])
-                # self.count_patterns("proxy_src_ip", obj["proxy_src_ip"])
-                # self.count_patterns("src", obj["src"])
-                # self.count_patterns("dst", obj["dst"])
-                # self.count_patterns("s_port", obj["s_port"])
+                # self.count_patterns("orig", obj["orig"])
+                self.count_patterns("proxy_src_ip", obj["proxy_src_ip"])
+                self.count_patterns("src", obj["src"])
+                self.count_patterns("dst", obj["dst"])
+                self.count_patterns("s_port", obj["s_port"])
+                
                 # self.count_patterns("SCADA_Tag", obj["SCADA_Tag"])
                 # self.count_patterns("service", obj["service"])
                 # self.count_patterns("Tag", obj["Tag"])
 
-                print("START")
+                # print("START")
                 for modbus_value in obj["Modbus_Value"].split(";"):
                     val = modbus_value
                     val = val.replace("0x", "")
@@ -184,7 +188,7 @@ class Patterns:
                     x = struct.unpack('<f', binascii.unhexlify(val))[0]
                     print(x)
                     self.count_patterns("modbus_value", modbus_value)
-                print("STOP")
+                # print("STOP")
 
 
 
