@@ -1,7 +1,8 @@
 import os
-import csv
+import sys
 from time import time
 import binascii, struct
+import statistics
 
 import pandas as pd
 import modules.filter as filter
@@ -9,15 +10,15 @@ import modules.normalize as normalize
 
 
 class Patterns:
-    def __init__(self, precission):
+    def __init__(self, precission, window_size):
         self.files = []
         self.stats = {}
-        self.patterns = {}
-        self.precission = precission
+        self.windows = {}
 
-        self.anomalies = {
-            "LIT101": [],
-        }
+        self.window_size = window_size
+        self.precission = precission
+        self.detection = {}
+
         
     def bootstrap(self, folder_loc):
         """
@@ -67,6 +68,7 @@ class Patterns:
             tag = "%d_%d" %(time_start_epoch, time_end_epoch)
             if tag not in self.stats.keys():
                 self.stats[tag] = {
+                    "index": anomaly["index"],
                     "anomalies": [],
                     "time_start": time_start,
                     "time_end": time_end,
@@ -79,17 +81,146 @@ class Patterns:
 
         it = 1
         total_processed = 0
+
+        self.total = {
+            "rows": 0,
+            "anomalies": 0,
+            "stages": 0
+        }
+        self.anomalies_unique = {}
+        self.stages_unique = {}
+
+        if max_process == -1:
+            max_process = len(self.files) - skip_first
+
+        # iterate file by file
         for file in self.files:
             it += 1
             if skip_first > -1 and it < skip_first:
                 continue
 
-            if max_process > -1 and total_processed > max_process:
+            if max_process > -1 and total_processed >= max_process:
                 break
 
-            print("[ %d / %d ] processing file %s" %(it, len(self.files), file))
-            yield self.process(file)
+            print("[ %d / %d | %d / %d ] processing file %s" %(total_processed+1, max_process, it, len(self.files), file))
+            self.process(file)
             total_processed += 1
+
+        self.total["total_attack_points"] = len(self.anomalies_unique.keys())
+        self.total["total_attack_stages"] = len(self.stages_unique.keys())
+
+        attack_points = ", ".join(self.anomalies_unique.keys())
+        attack_stages = ", ".join(self.stages_unique.keys())
+
+        table1 = [
+            [ "# rows",  "# Attack points", "Attack points", "# Attacked stages", "Attacked stages" ],
+            [ self.total["rows"], self.total["total_attack_points"], attack_points, self.total["total_attack_stages"], attack_stages]
+        ]        
+
+        table2 = [
+            [ "Attack #", "Detected", "Missed", "Detected network requests",  "Missed network requests", "False positive network requests" ],
+        ]
+
+        for index in self.detection.keys():
+            if self.detection[index]["detected_network_requests"] > 0:
+                self.detection[index]["detected"] = True
+            elif self.detection[index]["missed_network_requests"] > 0:
+                self.detection[index]["missed"] = True
+            elif self.detection[index]["false_positive_network_requests"] > 0:
+                self.detection[index]["false_positive"] = True
+
+        stats_sorted = []
+        for index in self.detection.keys():
+            name = index
+            if index == 0:
+                name = "*"
+            stats_sorted.append([
+                name,
+                self.detection[index]["detected"],
+                self.detection[index]["missed"],
+                self.detection[index]["detected_network_requests"],
+                self.detection[index]["missed_network_requests"],
+                self.detection[index]["false_positive_network_requests"],
+            ])
+                
+        stats_sorted = sorted(stats_sorted, key=lambda x: x[0])
+        for s in stats_sorted:
+            table2.append(s)
+
+
+
+        # stats for network requests
+        total = 0
+        detected = 0 
+        missed = 0
+        false_positive = 0
+        for index in self.detection.keys():
+            total += self.detection[index]["detected_network_requests"]
+            detected += self.detection[index]["detected_network_requests"]
+        
+            total += self.detection[index]["missed_network_requests"]
+            missed += self.detection[index]["missed_network_requests"]
+
+            total += self.detection[index]["false_positive_network_requests"]
+            false_positive += self.detection[index]["false_positive_network_requests"]
+
+        detection_rate = 0
+        if detected > 0:
+            detection_rate = detected * 100.0 / total 
+
+        miss_rate = 0
+        if missed > 0:
+            miss_rate = missed * 100.0 / total 
+
+        false_positive_rate = 0
+        if false_positive > 0:
+            false_positive_rate = false_positive * 100.0 / total 
+
+        detection_rate = "%.2f" %(detection_rate)
+        miss_rate = "%.2f" %(miss_rate)
+        false_positive_rate = "%.2f" %(false_positive_rate)
+
+
+        table3 = [
+            [ "Total", "Detected", "Detection %", "Missed", "Miss %", "False Positive", "False Positive %" ],
+            [ total, detected, detection_rate, missed, miss_rate, false_positive, false_positive_rate ],
+        ]
+
+
+
+        # stats for detection of anomalies
+        total = 0
+        detected = 0 
+        missed = 0
+        
+        for index in self.detection.keys():
+            if index == 0:
+                continue
+            if self.detection[index]["detected"]:
+                total += 1
+                detected += 1
+            else:
+                total += self.detection[index]["missed"]
+                missed += 1
+
+        detection_rate = 0
+        if detected > 0:
+            detection_rate = detected * 100.0 / total 
+
+        miss_rate = 0
+        if missed > 0:
+            miss_rate = missed * 100.0 / total 
+
+
+        detection_rate = "%.2f" %(detection_rate)
+        miss_rate = "%.2f" %(miss_rate)
+
+        table4 = [
+            [ "Total", "Detected", "Detection %", "Missed", "Miss %" ],
+            [ total, detected, detection_rate, missed, miss_rate ],
+        ]
+
+        return [ table1, table2, table3, table4 ]
 
 
 
@@ -100,115 +231,132 @@ class Patterns:
         """
 
         # reading csv file
-        df = pd.read_csv(file)
-        header = df.columns.tolist()
+        try:
+            df = pd.read_csv(file)
+            header = df.columns.tolist()
 
-        total = {
-            "rows": 0,
-            "attack": 0,
-            "normal": 0,
-            "anomalies": 0,
-            "stages": 0
-        }
-        anomalies_unique = {}
-        stages_unique = {}
-
-        with open(file, "r") as file:
-            it = 0
-            for line in file:
-                it += 1
-                
-                if it % self.precission != 0:
-                    continue
-
-                tmp = line.split(",")
-                if tmp[1] == "date" and tmp[2] == "time":
-                    continue
-
-                if tmp[1].find("-") > -1:
-                    ttt = tmp[1].split("-")
-                    tmp[1] = "%s%s20%s" %(ttt[0], ttt[1], ttt[2])
-
-                tmp[1] = tmp[1].replace("Jan", "/1/")
-                tmp[1] = tmp[1].replace("Feb", "/2/")
-                tmp[1] = tmp[1].replace("Mar", "/3/")
-                tmp[1] = tmp[1].replace("Apr", "/4/")
-                tmp[1] = tmp[1].replace("May", "/5/")
-                tmp[1] = tmp[1].replace("Jun", "/6/")
-                tmp[1] = tmp[1].replace("Jul", "/7/")
-                tmp[1] = tmp[1].replace("Aug", "/8/")
-                tmp[1] = tmp[1].replace("Sep", "/9/")
-                tmp[1] = tmp[1].replace("Oct", "/10/")
-                tmp[1] = tmp[1].replace("Nov", "/11/")
-                tmp[1] = tmp[1].replace("Dec", "/12/")
-
-                dts = tmp[1] + " " + tmp[2]
-                _, timestamp_epoch, _ = normalize.date_time(dts)
-                
-                
-                anomalies = self.get_anomalies_by_timestamp(timestamp_epoch)
-                for anomaly in anomalies:
-                    tag = ", ".join(anomaly["attack_points"])
-                    anomalies_unique[tag] = ""
-
-                    tag = ", ".join(anomaly["attack_stages"])
-                    stages_unique[tag] = ""
-
-
-                if len(anomalies) > 0:
-                    total["attack"] += 1
-                else:
-                    total["normal"] += 1
-                total["rows"] += 1
-
-                obj = self.parse_csv(header, line, ",")
-                if obj["Modbus_Function_Description"].find("Response") == -1:
-                    continue
-
-                self.count_patterns("Modbus_Function_Description", obj["Modbus_Function_Description"])
-                
-                # self.count_patterns("orig", obj["orig"])
-                self.count_patterns("proxy_src_ip", obj["proxy_src_ip"])
-                self.count_patterns("src", obj["src"])
-                self.count_patterns("dst", obj["dst"])
-                self.count_patterns("s_port", obj["s_port"])
-                
-                # self.count_patterns("SCADA_Tag", obj["SCADA_Tag"])
-                # self.count_patterns("service", obj["service"])
-                # self.count_patterns("Tag", obj["Tag"])
-
-                # print("START")
-                for modbus_value in obj["Modbus_Value"].split(";"):
-                    val = modbus_value
-                    val = val.replace("0x", "")
-                    val = val.replace(" ", "")
-                    if len(val) != 8:
+            with open(file, "r") as file:
+                it = 0
+                for line in file:
+                    it += 1
+                    
+                    if it % self.precission != 0:
                         continue
 
-                    x = struct.unpack('<f', binascii.unhexlify(val))[0]
-                    print(x)
-                    self.count_patterns("modbus_value", modbus_value)
-                # print("STOP")
+                    tmp = line.split(",")
+                    if tmp[1] == "date" and tmp[2] == "time":
+                        continue
+
+                    if tmp[1].find("-") > -1:
+                        ttt = tmp[1].split("-")
+                        tmp[1] = "%s%s20%s" %(ttt[0], ttt[1], ttt[2])
+
+                    tmp[1] = tmp[1].replace("Jan", "/1/")
+                    tmp[1] = tmp[1].replace("Feb", "/2/")
+                    tmp[1] = tmp[1].replace("Mar", "/3/")
+                    tmp[1] = tmp[1].replace("Apr", "/4/")
+                    tmp[1] = tmp[1].replace("May", "/5/")
+                    tmp[1] = tmp[1].replace("Jun", "/6/")
+                    tmp[1] = tmp[1].replace("Jul", "/7/")
+                    tmp[1] = tmp[1].replace("Aug", "/8/")
+                    tmp[1] = tmp[1].replace("Sep", "/9/")
+                    tmp[1] = tmp[1].replace("Oct", "/10/")
+                    tmp[1] = tmp[1].replace("Nov", "/11/")
+                    tmp[1] = tmp[1].replace("Dec", "/12/")
+
+                    dts = tmp[1] + " " + tmp[2]
+                    _, timestamp_epoch, _ = normalize.date_time(dts)
+                    
+                    
+                    anomalies = self.get_anomalies_by_timestamp(timestamp_epoch)
+                    for anomaly in anomalies:
+                        for at in anomaly["attack_points"]:
+                            self.anomalies_unique[at] = ""
+
+                        tag = ", ".join(anomaly["attack_stages"])
+                        self.stages_unique[tag] = ""
 
 
 
+                    obj = self.parse_csv(header, line, ",")
+                    if obj["Modbus_Function_Description"].find("Response") == -1:
+                        continue
 
-        
-        
-        total["total_attack_points"] = len(anomalies_unique.keys())
-        total["total_attack_stages"] = len(stages_unique.keys())
+                    value = 0
 
-        attack_points = ", ".join(anomalies_unique.keys())
-        attack_stages = ", ".join(stages_unique.keys())
+                    for modbus_value in obj["Modbus_Value"].split(";"):
+                        val = modbus_value
+                        val = val.replace("0x", "")
+                        val = val.replace(" ", "")
+                        if len(val) != 8:
+                            continue
 
-        table = [
-            [ "# rows", "Attack", "Normal", "# Attack points", "Attack points", "# Attacked stages", "Attacked stages" ],
-            [ total["rows"], total["attack"], total["normal"], total["total_attack_points"], attack_points, total["total_attack_stages"], attack_stages]
-        ]
+                        x = struct.unpack('<f', binascii.unhexlify(val))[0]
+                        value = x
 
-        print(self.patterns)
 
-        return table
+                    is_attack_ongoing = False
+                    if len(anomalies) > 0:
+                        is_attack_ongoing = True
+
+                    # process detection
+                    dest = obj["SCADA_Tag"]
+                    dest = dest.lstrip("HMI_")
+
+                    self.moving_window(dest, value)
+
+                    for anomaly in anomalies:
+                        if dest not in anomaly["attack_points"]:
+                            continue
+
+                        index = anomaly["index"]
+                        # print(dest, anomaly["attack_points"])
+                        # print(anomaly)
+                        is_attack_detected = self.detect_attack(dest)
+
+                        try:
+                            tmp = self.detection[index]
+                        except:
+                            self.detection[index] = {
+                                "detected": False,
+                                "missed": False,
+                                "false_positive": False,
+                                "detected_network_requests": 0,
+                                "missed_network_requests": 0,
+                                "false_positive_network_requests": 0,
+                            }
+
+                        if is_attack_ongoing:
+                            if is_attack_detected == True:
+                                self.detection[index]["detected_network_requests"] += 1
+                            else:
+                                self.detection[index]["missed_network_requests"] += 1
+                    
+                    if len(anomalies) == 0:
+                        is_attack_detected = self.detect_attack(dest)
+                        if is_attack_detected == False:
+                            continue
+
+                        try:
+                            tmp = self.detection[0]
+                        except:
+                            self.detection[0] = {
+                                "detected": False,
+                                "missed": False,
+                                "false_positive": False,
+                                "detected_network_requests": 0,
+                                "missed_network_requests": 0,
+                                "false_positive_network_requests": 0,
+                            }
+                        self.detection[0]["false_positive_network_requests"] += 1
+
+
+
+                    # global stats
+                    self.total["rows"] += 1
+
+        except:
+            print("process: %s" %(str(sys.exc_info())))
 
 
 
@@ -249,21 +397,55 @@ class Patterns:
         return obj
 
 
-    def count_patterns(self, name, value):
+    def moving_window(self, name, value):
         """
             counts stats based on name
         """
 
         try:
-            tmp = self.patterns[name]
+            tmp = self.windows[name]
         except:
-            self.patterns[name] = {}
+            self.windows[name] = []
+
+        if len(self.windows[name]) > self.window_size:
+            self.windows[name] = self.windows[name][1:]
+        self.windows[name].append(value)
 
 
-        try:
-            tmp = self.patterns[name][value]
-        except:
-            self.patterns[name][value] = 0
+    def detect_attack(self, name):
+        """
+            detect if attack is going or not
+        """
+
+        if len(self.windows[name]) < self.window_size:
+            return False
+
+        stdev = statistics.stdev(self.windows[name])
+        avg = statistics.median(self.windows[name])
+
+        min_border = avg - stdev*2
+        max_border = avg + stdev*2
+
+        alerts = []
+        for value in self.windows[name]:
+            is_for_alert = False
+            if value < min_border:
+                is_for_alert = True
+
+            if value > max_border:
+              is_for_alert = True
+
+            if is_for_alert:
+                alerts.append(value)
 
 
-        self.patterns[name][value] += 1
+        # print("dusan", len(alerts), stdev, avg)
+
+        # minimum 10% of window size must be detection rate
+        if len(alerts) > self.window_size/70:
+            return True
+        
+        return False
+
+
+

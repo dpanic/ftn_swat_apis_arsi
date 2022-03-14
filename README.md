@@ -41,8 +41,8 @@ Analysis of CSV files, determine patterns from which Yara rules will be built
     * ✅ set skip files
     * ✅ set precision window (process every N rows)
     * ✅ parse big data 
-* sliding window with KNN (k-nearest neighbors)
-* table with results 
+* ✅ sliding window with statistical analysis
+* ✅ table with results 
 
 [ behaviour based IDS ]
 

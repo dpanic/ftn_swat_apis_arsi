@@ -11,9 +11,9 @@ def anomalies(file_loc):
     """
     stages = {}
     anomalies = []
+    times = []
 
     df = pd.read_excel(file_loc)
-
 
     for index, row in df.iterrows():
         try:
@@ -63,11 +63,15 @@ def anomalies(file_loc):
 
             # define anomaly
             anomaly = {
+                "index": index,
                 "time_start": np.array(time_start, dtype=np.datetime64),
                 "time_end": np.array(time_end, dtype=np.datetime64),
                 "attack_points": attack_points,
                 "attack_stages": attack_stages,
             }
+            
+            times.append(np.array(time_start, dtype=np.datetime64),)
+            times.append(np.array(time_end, dtype=np.datetime64),)
 
             anomalies.append(anomaly)
         except:
@@ -78,6 +82,13 @@ def anomalies(file_loc):
     # sort fields
     for key in stages.keys():
         stages[key] = list(stages[key].keys())
+
+
+    times.sort()
+    time_start = times[0]
+    time_end = times[len(times)-1]
+
+    print("First anomaly detected %s" %(time_start))
 
     df.reset_index()
     return [ stages, anomalies ]
