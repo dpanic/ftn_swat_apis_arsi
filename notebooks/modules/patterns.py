@@ -131,11 +131,8 @@ class Patterns:
 
         stats_sorted = []
         for index in self.detection.keys():
-            name = index
-            if index == 0:
-                name = "*"
             stats_sorted.append([
-                name,
+                index,
                 self.detection[index]["detected"],
                 self.detection[index]["missed"],
                 self.detection[index]["detected_network_requests"],
@@ -145,6 +142,8 @@ class Patterns:
                 
         stats_sorted = sorted(stats_sorted, key=lambda x: x[0])
         for s in stats_sorted:
+            if s[0] == 0:
+                s[0] = "*"
             table2.append(s)
 
 
@@ -281,18 +280,29 @@ class Patterns:
                     obj = self.parse_csv(header, line, ",")
                     if obj["Modbus_Function_Description"].find("Response") == -1:
                         continue
+                    self.total["rows"] += 1
 
                     value = 0
+                    tmp = obj["Modbus_Value"].split(";")
+                    val = tmp[0]
+                    val = val.replace("0x", "")
+                    val = val.replace(" ", "")
+                    if len(val) != 8:
+                        continue
+                    value = struct.unpack('<f', binascii.unhexlify(val))[0]
 
-                    for modbus_value in obj["Modbus_Value"].split(";"):
-                        val = modbus_value
-                        val = val.replace("0x", "")
-                        val = val.replace(" ", "")
-                        if len(val) != 8:
-                            continue
+                    #     x = struct.unpack('<f', binascii.unhexlify(val))[0]
+                    # for modbus_value in obj["Modbus_Value"].split(";"):
+                    #     val = modbus_value
+                    #     val = val.replace("0x", "")
+                    #     val = val.replace(" ", "")
+                    #     if len(val) != 8:
+                    #         continue
 
-                        x = struct.unpack('<f', binascii.unhexlify(val))[0]
-                        value = x
+                    #     x = struct.unpack('<f', binascii.unhexlify(val))[0]
+                    #     # print(x)
+                    #     value = x
+                    # print("end")
 
 
                     is_attack_ongoing = False
@@ -353,7 +363,6 @@ class Patterns:
 
 
                     # global stats
-                    self.total["rows"] += 1
 
         except:
             print("process: %s" %(str(sys.exc_info())))
@@ -423,11 +432,13 @@ class Patterns:
         stdev = statistics.stdev(self.windows[name])
         avg = statistics.median(self.windows[name])
 
-        min_border = avg - stdev*2
-        max_border = avg + stdev*2
+        min_border = avg - stdev
+        max_border = avg + stdev
 
         alerts = []
-        for value in self.windows[name]:
+        for idx in range(0, len(self.windows[name])-1):
+            value = self.windows[name][idx]
+
             is_for_alert = False
             if value < min_border:
                 is_for_alert = True
@@ -436,13 +447,14 @@ class Patterns:
               is_for_alert = True
 
             if is_for_alert:
-                alerts.append(value)
+                alerts.append(idx)
 
-
-        # print("dusan", len(alerts), stdev, avg)
 
         # minimum 10% of window size must be detection rate
-        if len(alerts) > self.window_size/70:
+        min_alerts = self.window_size/100*10 
+        max_alerts = self.window_size/100*25 
+        if len(alerts) > min_alerts and len(alerts) < max_alerts:
+            # print("dusan len(alerts)=%s | self.window_size=%d | stdev=%.2f | avg=%.2f"%(len(alerts), self.window_size, stdev, avg))
             return True
         
         return False
