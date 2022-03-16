@@ -145,7 +145,7 @@ class Patterns:
         ]        
 
         table2 = [
-            [ "Attack #", "Detected", "Missed", "Detected network requests",  "Missed network requests", "False positive network requests" ],
+            [ "Attack #", "Detected", "Missed", "Attack Type", "Detected network requests",  "Missed network requests", "False positive network requests" ],
         ]
 
         for index in self.detection.keys():
@@ -155,13 +155,26 @@ class Patterns:
                 self.detection[index]["missed"] = True
             elif self.detection[index]["false_positive_network_requests"] > 0:
                 self.detection[index]["false_positive"] = True
+            
+            self.detection[index]["attack_type"] = "Network"
+            if self.detection[index]["detected"] == False and self.detection[index]["missed"] == False:
+                self.detection[index]["attack_type"] = "Physical"
+
+            if self.detection[index]["false_positive"] > 0:
+                self.detection[index]["attack_type"] = "Network"
+
+
 
         stats_sorted = []
         for index in self.detection.keys():
+            if self.detection[index]["attack_type"] != "Network":
+                continue
+
             stats_sorted.append([
                 index,
                 self.detection[index]["detected"],
                 self.detection[index]["missed"],
+                self.detection[index]["attack_type"],
                 self.detection[index]["detected_network_requests"],
                 self.detection[index]["missed_network_requests"],
                 self.detection[index]["false_positive_network_requests"],
@@ -181,6 +194,9 @@ class Patterns:
         missed = 0
         false_positive = 0
         for index in self.detection.keys():
+            if self.detection[index]["attack_type"] != "Network":
+                continue
+
             total += self.detection[index]["detected_network_requests"]
             detected += self.detection[index]["detected_network_requests"]
         
@@ -222,6 +238,10 @@ class Patterns:
         for index in self.detection.keys():
             if index == 0:
                 continue
+
+            if self.detection[index]["attack_type"] != "Network":
+                continue
+                        
             if self.detection[index]["detected"]:
                 total += 1
                 detected += 1
@@ -363,10 +383,6 @@ class Patterns:
                                 is_ok = True
                                 break
 
-                            if self.compare_digits(at, dest) == True:
-                                is_ok = True
-                                break
-
                         if is_ok == False:
                             continue
 
@@ -497,26 +513,6 @@ class Patterns:
         
         return False
 
-    def compare_digits(self, input1, input2):
-        allowed = [
-            "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
-        ]
-
-        n1 = ""
-        for c in input1:
-            if c not in allowed:
-                continue
-            n1 += c
-
-        n2 = ""
-        for c in input2:
-            if c not in allowed:
-                continue
-            n2 += c
-
-        print(input1, input2, n1, n2, n1==n2)
-        return n1 == n2
-            
 
 
 
