@@ -1,6 +1,6 @@
 import os
 import sys
-from time import time
+import time
 import binascii, struct
 import statistics
 
@@ -8,6 +8,8 @@ import pandas as pd
 import modules.filter as filter
 import modules.normalize as normalize
 
+import _thread as thread
+import modules.threading_control as threading_control
 
 class Patterns:
     def __init__(self, precission, window_size):
@@ -18,6 +20,10 @@ class Patterns:
         self.window_size = window_size
         self.precission = precission
         self.detection = {}
+        self.header = None
+        
+        self.ref_tc = threading_control.threading_control(max_work=3600*12, max_threads=20)
+
 
         
     def bootstrap(self, folder_loc):
@@ -57,8 +63,8 @@ class Patterns:
         self.stats = {}
 
         for anomaly in anomalies:
-            time_start, time_end, filtered_anomalies = filter.get_times(anomalies, anomaly["attack_points"])
-            
+            time_start = anomaly["time_start"]
+            time_end = anomaly["time_end"]
             time_start_str = "%s" %(time_start.astype("str"))
             time_end_str = "%s" %(time_end.astype("str"))
 
@@ -75,8 +81,17 @@ class Patterns:
                 }
 
 
-            for filtered_anomaly in filtered_anomalies:
-                self.stats[tag]["anomalies"].append(filtered_anomaly)
+            self.stats[tag]["anomalies"].append(anomaly)
+
+
+        # print(len(self.stats.keys()))
+        # total = 0
+        # for tag in self.stats.keys():
+        #     print(tag, len(self.stats[tag]["anomalies"]))
+        #     total += len(self.stats[tag]["anomalies"])
+        # print("total", total)
+        # print("anoamlies", len(anomalies))
+        # return
 
 
         it = 1
@@ -103,8 +118,20 @@ class Patterns:
                 break
 
             print("[ %d / %d | %d / %d ] processing file %s" %(total_processed+1, max_process, it, len(self.files), file))
-            self.process(file)
+
+            self.ref_tc.wait_threads()
+            self.ref_tc.inc_threads()
+
+            if self.header == None:
+                df = pd.read_csv(file)
+                self.header = df.columns.tolist()
+
+            thread.start_new_thread(self.process, (file,))
             total_processed += 1
+
+        while self.ref_tc.get_total_threads() > 0 and self.ref_tc.can_work():
+            time.sleep(0.3)
+
 
         self.total["total_attack_points"] = len(self.anomalies_unique.keys())
         self.total["total_attack_stages"] = len(self.stages_unique.keys())
@@ -164,15 +191,15 @@ class Patterns:
             false_positive += self.detection[index]["false_positive_network_requests"]
 
         detection_rate = 0
-        if detected > 0:
+        if detected > 0 and total > 0:
             detection_rate = detected * 100.0 / total 
 
         miss_rate = 0
-        if missed > 0:
+        if missed > 0 and total > 0:
             miss_rate = missed * 100.0 / total 
 
         false_positive_rate = 0
-        if false_positive > 0:
+        if false_positive > 0 and total > 0:
             false_positive_rate = false_positive * 100.0 / total 
 
         detection_rate = "%.2f" %(detection_rate)
@@ -199,15 +226,15 @@ class Patterns:
                 total += 1
                 detected += 1
             else:
-                total += self.detection[index]["missed"]
+                total += 1
                 missed += 1
 
         detection_rate = 0
-        if detected > 0:
+        if detected > 0 and total > 0:
             detection_rate = detected * 100.0 / total 
 
         miss_rate = 0
-        if missed > 0:
+        if missed > 0 and total > 0:
             miss_rate = missed * 100.0 / total 
 
 
@@ -231,9 +258,8 @@ class Patterns:
 
         # reading csv file
         try:
-            df = pd.read_csv(file)
-            header = df.columns.tolist()
-
+            header = self.header
+            
             with open(file, "r") as file:
                 it = 0
                 for line in file:
@@ -269,11 +295,11 @@ class Patterns:
                     
                     anomalies = self.get_anomalies_by_timestamp(timestamp_epoch)
                     for anomaly in anomalies:
-                        for at in anomaly["attack_points"]:
-                            self.anomalies_unique[at] = ""
+                        for attack_point in anomaly["attack_points"]:
+                            self.anomalies_unique[attack_point] = ""
 
-                        tag = ", ".join(anomaly["attack_stages"])
-                        self.stages_unique[tag] = ""
+                        for attack_stage in anomaly["attack_stages"]:
+                            self.stages_unique[attack_stage] = ""
 
 
 
@@ -316,13 +342,7 @@ class Patterns:
                     self.moving_window(dest, value)
 
                     for anomaly in anomalies:
-                        if dest not in anomaly["attack_points"]:
-                            continue
-
                         index = anomaly["index"]
-                        # print(dest, anomaly["attack_points"])
-                        # print(anomaly)
-                        is_attack_detected = self.detect_attack(dest)
 
                         try:
                             tmp = self.detection[index]
@@ -336,6 +356,23 @@ class Patterns:
                                 "false_positive_network_requests": 0,
                             }
 
+
+                        is_ok = False
+                        for at in anomaly["attack_points"]:
+                            if at == dest:
+                                is_ok = True
+                                break
+
+                            if self.compare_digits(at, dest) == True:
+                                is_ok = True
+                                break
+
+                        if is_ok == False:
+                            continue
+
+                        # print(dest, anomaly["attack_points"])
+                        # print(anomaly)
+                        is_attack_detected = self.detect_attack(dest)
                         if is_attack_ongoing:
                             if is_attack_detected == True:
                                 self.detection[index]["detected_network_requests"] += 1
@@ -366,6 +403,7 @@ class Patterns:
 
         except:
             print("process: %s" %(str(sys.exc_info())))
+        self.ref_tc.dec_threads()
 
 
 
@@ -458,6 +496,27 @@ class Patterns:
             return True
         
         return False
+
+    def compare_digits(self, input1, input2):
+        allowed = [
+            "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
+        ]
+
+        n1 = ""
+        for c in input1:
+            if c not in allowed:
+                continue
+            n1 += c
+
+        n2 = ""
+        for c in input2:
+            if c not in allowed:
+                continue
+            n2 += c
+
+        print(input1, input2, n1, n2, n1==n2)
+        return n1 == n2
+            
 
 
 
