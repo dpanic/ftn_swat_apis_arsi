@@ -479,7 +479,6 @@ class Patterns:
         """
             detect if attack is going or not
         """
-
         if len(self.windows[name]) < self.window_size:
             return False
 

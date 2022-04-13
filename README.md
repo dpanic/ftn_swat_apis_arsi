@@ -48,11 +48,6 @@ Analysis of CSV files, determine patterns from which Yara rules will be built
 
 <br>
 
-## Documentation
-* 2 Presentations
-* 1 Word document
-
-<br>
 
 ## References
  * https://mlad.kaspersky.com/swat-testbed/
